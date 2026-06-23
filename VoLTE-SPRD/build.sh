@@ -29,3 +29,4 @@ java -jar ../apktool.jar b ../prebuilts/build-tools/linux-x86/bin/zip2zip -0 'li
 mv -f ims/dist/ims.new.apk ims/dist/ims.apk
 LD_LIBRARY_PATH=../signapk/ java -jar ../signapk/signapk.jar -a 4096 ../keys/platform.x509.pem ../keys/platform.pk8 ims/dist/ims.apk ims.apk
 rm -rf ims
+echo ims.apk
