@@ -10,6 +10,13 @@ java -jar ../baksmali.jar d -o ims/smali "$1"/system/system_ext/framework/qti-te
 java -jar ../baksmali.jar d -o ims/smali "$1"/system/system_ext/framework/qti-telephony-utils.jar
 java -jar ../baksmali.jar d -o ims/smali "$1"/product/framework/ims-ext-common.jar
 set +e
+cp -f "$1"/system/apex/com.android.art.release/lib/libandroidicu.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.art.release/lib/libnativehelper.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.os.statsd/lib/libstatspull.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime/lib/bionic/libc.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime/lib/bionic/libdl.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime/lib/bionic/libdl_android.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime/lib/bionic/libm.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/android.frameworks.bufferhub@1.0.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/android.hardware.cas.native@1.0.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/android.hardware.cas@1.0.so "ims/lib/armeabi-v7a/"
