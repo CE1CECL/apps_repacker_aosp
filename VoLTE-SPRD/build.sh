@@ -1,32 +1,143 @@
 #!/bin/bash
 clear
+rm -rf ims ims.apk
 set -e
-rm -rf vdexExtractor_deodexed out ims ims.apk
-if [ "$#" -lt 2 ]; then echo "Usage: $0 /path/to/root/ /path/to/ims.apk"; exit 1; fi
-java -jar ../apktool.jar d "$2"
-xmlstarlet ed -L -N android=http://schemas.android.com/apk/res/android -d '/manifest/@android:compileSdkVersion' -d '/manifest/@android:compileSdkVersionCodename' -d '//application/@android:appComponentFactory' -d '//application/@android:usesNonSdkApi' ims/AndroidManifest.xml
-rm -rf out classes*.dex vdexExtractor_deodexed boot-framework boot-telephony-common boot-radio_interactor_common
-../vdexExtractor/tools/deodex/run.sh -i "$1"/system/framework/boot-framework.vdex
-for a in vdexExtractor_deodexed/*/*; do java -jar ../baksmali.jar d $a; done
-mv out boot-framework
-../vdexExtractor/tools/deodex/run.sh -i "$1"/system/framework/boot-telephony-common.vdex
-for b in vdexExtractor_deodexed/*/*; do java -jar ../baksmali.jar d $b; done
-mv out boot-telephony-common
-../vdexExtractor/tools/deodex/run.sh -i "$1"/system/framework/boot-radio_interactor_common.vdex
-for c in vdexExtractor_deodexed/*/*; do java -jar ../baksmali.jar d $c; done
-mv out boot-radio_interactor_common
-(cd boot-radio_interactor_common; tar c . | tar x -C ../ims/smali/)
-perl -0777 -pe 's/.annotation.*InnerClass.*\n.*accessFlag.*\n.*name.*\n.*end annotation.*\n//g' -i ims/smali/vendor/sprd/hardware/radio/V1_0/IAtcRadioIndication\$Proxy.smali
-mkdir -p ims/smali/com/android/internal/telephony/{,dataconnection}
-cp boot-telephony-common/com/android/internal/telephony/dataconnection/{DcNetworkManager*,ApnSetting*,AbsApnSett*} ims/smali/com/android/internal/telephony/dataconnection/
-cp boot-telephony-common/com/android/internal/telephony/VolteConfig.smali ims/smali/com/android/internal/telephony/
-cp boot-framework/com/android/internal/telephony/ITelephonyEx* ims/smali/com/android/internal/telephony/
-mkdir -p ims/smali/com/android/ims/internal
-cp boot-framework/com/android/ims/internal/{IImsUtEx*,IImsServiceEx*,IVoWifi*,IImsDoze*,ImsManagerEx*,IImsUtListenerEx*} ims/smali/com/android/ims/internal
-mkdir -p ims/smali/android/telephony/
-cp boot-framework/android/telephony/TelephonyManagerEx.smali ims/smali/android/telephony/perl -0777 -i -pe 's/.*invoke.*CarrierConfigManager;->getConfigForPhoneId.*\n\n\h*move-result-object v([0-9]*)\n/const v\1, 0/g' ims/smali/com/spreadtrum/ims/ut/ImsUtProxy.smali
-java -jar ../apktool.jar b ../prebuilts/build-tools/linux-x86/bin/zip2zip -0 'lib/**/*' -i ims/dist/ims.apk -o ims/dist/ims.new.apk
-mv -f ims/dist/ims.new.apk ims/dist/ims.apk
+if [ "$#" -lt 1 ]; then echo "Usage: $0 /path/to/root/"; exit 1; fi
+java -jar ../apktool.jar d -o ims "$1"/product/priv-app/ims/ims.apk
+mkdir -p "ims/lib/armeabi-v7a/"
+xmlstarlet ed -L -N android=http://schemas.android.com/apk/res/android -d '/manifest/@android:compileSdkVersion' -d '/manifest/@android:compileSdkVersionCodename' -d '//application/@android:usesNonSdkApi' -u '/manifest/application/@android:extractNativeLibs' -v 'true' ims/AndroidManifest.xml
+set +e
+cp -f "$1"/system/apex/com.android.runtime.release/lib/bionic/libc.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime.release/lib/bionic/libdl.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime.release/lib/bionic/libm.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime.release/lib/libandroidicu.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime.release/lib/libicui18n.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime.release/lib/libicuuc.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/apex/com.android.runtime.release/lib/libnativehelper.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.frameworks.bufferhub@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.configstore-utils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.configstore@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.configstore@1.1.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.allocator@2.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.allocator@3.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.bufferqueue@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.bufferqueue@2.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.common@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.common@1.1.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.common@1.2.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.mapper@2.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.mapper@2.1.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.graphics.mapper@3.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.media.omx@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.media@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hardware.memtrack@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hidl.token@1.0-utils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.hidl.token@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/android.system.suspend@1.0.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/bootstrap/libc.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/bootstrap/libdl.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/bootstrap/libm.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/ld-android.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libEGL.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libETC1.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libGLESv1_CM.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libGLESv2.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libGLESv3.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libandroid_runtime.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libandroidfw.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libappfuse.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libaudioclient.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libaudiomanager.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libaudiopolicy.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libaudioutils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbacktrace.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbase.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbinder.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbinderthreadstate.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbpf.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbpf_android.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbufferhub.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libbufferhubqueue.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libc++.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libcamera_client.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libcamera_metadata.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libcgrouprc.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libcrypto.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libcutils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libdebuggerd_client.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libdexfile_support.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libdl_android.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libdng_sdk.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libdrmframework.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libexpat.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libft2.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libgraphicsenv.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libgui.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhardware.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhardware_legacy.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libharfbuzz_ng.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libheif.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhidl-gen-utils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhidlbase.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhidltransport.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhwbinder.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libhwui.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libimg_utils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libinput.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libjpeg.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/liblog.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/liblzma.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmedia.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmedia_helper.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmedia_omx.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmediametrics.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmediautils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmeminfo.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmemtrack.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libmemunreachable.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libminikin.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnativebridge_lazy.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnativeloader_lazy.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnativewindow.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnblog.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnetd_client.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnetdbpf.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libnetdutils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libpackagelistparser.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libpcre2.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libpdfium.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libpdx_default_transport.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libpiex.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libpng.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libprocessgroup.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libprocinfo.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libprotobuf-cpp-lite.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libselinux.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libsensor.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libsonivox.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libsoundtrigger.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libspeexresampler.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libsqlite.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libstagefright_foundation.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libstatslog.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libstdc++.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libsync.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libtinyxml2.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libui.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libunwindstack.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libusbhost.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libutils.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libvibrator.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libvideo_call_engine_jni.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libvintf.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libvndksupport.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libvulkan.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libz.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/libziparchive.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/server_configurable_flags.so "ims/lib/armeabi-v7a/"
+set -e
+for a in $(ls ims/lib/armeabi-v7a/ | sed 's/^lib.*//g' | sort | uniq); do b="$(echo "$a" | sed -E -e 's/^.../lib/g' -e 's/@/-/g')"; mv -f "ims/lib/armeabi-v7a/"/$a "ims/lib/armeabi-v7a/"/$b; sed -i -E "s/$a/$b/g" "ims/lib/armeabi-v7a/"/*.so; done
+java -jar ../apktool.jar b ims
 LD_LIBRARY_PATH=../signapk/ java -jar ../signapk/signapk.jar -a 4096 ../keys/platform.x509.pem ../keys/platform.pk8 ims/dist/ims.apk ims.apk
 rm -rf ims
 echo ims.apk
