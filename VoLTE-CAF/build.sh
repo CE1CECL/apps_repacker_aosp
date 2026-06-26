@@ -5,7 +5,7 @@ set -e
 if [ "$#" -lt 1 ]; then echo "Usage: $0 /path/to/root/"; exit 1; fi
 java -jar ../apktool.jar d -o ims "$1"/system/system_ext/priv-app/ims/ims.apk
 mkdir -p "ims/lib/armeabi-v7a/"
-xmlstarlet ed -L -N a=http://schemas.android.com/apk/res/android -d '//uses-library' -d '/manifest/@a:compileSdkVersion' -d '/manifest/@a:compileSdkVersionCodename' -d '/manifest/application/@a:usesNonSdkApi' ims/AndroidManifest.xml
+xmlstarlet ed -L -N android=http://schemas.android.com/apk/res/android -d '//uses-library' -d '/manifest/@android:compileSdkVersion' -d '/manifest/@android:compileSdkVersionCodename' -d '/manifest/application/@android:usesNonSdkApi' -d '/manifest/@android:sharedUserId' -s '/manifest' -t attr -n 'android:sharedUserId' -v 'android.uid.phone' ims/AndroidManifest.xml
 java -jar ../baksmali.jar d -o ims/smali "$1"/system/system_ext/framework/qti-telephony-hidl-wrapper.jar
 java -jar ../baksmali.jar d -o ims/smali "$1"/system/system_ext/framework/qti-telephony-utils.jar
 java -jar ../baksmali.jar d -o ims/smali "$1"/product/framework/ims-ext-common.jar
@@ -55,6 +55,7 @@ cp -f "$1"/system/lib/android.hidl.token@1.0-utils.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/android.hidl.token@1.0.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/android.system.suspend@1.0.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/capture_state_listener-aidl-V1-cpp.so "ims/lib/armeabi-v7a/"
+cp -f "$1"/system/lib/ld-android.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/libEGL.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/libETC1.so "ims/lib/armeabi-v7a/"
 cp -f "$1"/system/lib/libGLESv1_CM.so "ims/lib/armeabi-v7a/"

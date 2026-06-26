@@ -4,7 +4,7 @@ set -e
 rm -rf vdexExtractor_deodexed out ims ims.apk
 if [ "$#" -lt 2 ]; then echo "Usage: $0 /path/to/root/ /path/to/ims.apk"; exit 1; fi
 java -jar ../apktool.jar d "$2"
-xmlstarlet ed -L -N a=http://schemas.android.com/apk/res/android -d '/manifest/@a:compileSdkVersion' -d '/manifest/@a:compileSdkVersionCodename' -d '//application/@a:appComponentFactory' -d '//application/@a:usesNonSdkApi' ims/AndroidManifest.xml
+xmlstarlet ed -L -N android=http://schemas.android.com/apk/res/android -d '/manifest/@android:compileSdkVersion' -d '/manifest/@android:compileSdkVersionCodename' -d '//application/@android:appComponentFactory' -d '//application/@android:usesNonSdkApi' ims/AndroidManifest.xml
 rm -rf out classes*.dex vdexExtractor_deodexed boot-framework boot-telephony-common boot-radio_interactor_common
 ../vdexExtractor/tools/deodex/run.sh -i "$1"/system/framework/boot-framework.vdex
 for a in vdexExtractor_deodexed/*/*; do java -jar ../baksmali.jar d $a; done

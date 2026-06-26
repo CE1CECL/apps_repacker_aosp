@@ -9,7 +9,7 @@ java -jar ../baksmali.jar d -o ImsService/smali "$1"/system/framework/mediatek-i
 mkdir -p "ImsService/lib/armeabi-v7a/"
 mkdir -p "ImsService/lib/arm64-v8a/"
 mkdir -p "apex"
-xmlstarlet ed -L -N a=http://schemas.android.com/apk/res/android -d '/manifest/application/@a:usesNonSdkApi' -u '/manifest/application/@a:extractNativeLibs' -v 'true' ImsService/AndroidManifest.xml
+xmlstarlet ed -L -N android=http://schemas.android.com/apk/res/android -d '/manifest/application/@android:usesNonSdkApi' -u '/manifest/application/@android:extractNativeLibs' -v 'true' ImsService/AndroidManifest.xml
 for a in $(find $(find $1 -type d -iname "apex") -not -type d -iname "*.apex"); do cp -f $a apex/$(basename $a).zip; mkdir -p apex/$(basename $a).o; unzip -n apex/$(basename $a).zip -d apex/$(basename $a).o; done
 for a in $(find apex -not -type d -iname "*.img"); do mkdir -p $a.m; mount -o ro,noload $a $a.m; cp -rf $a.m $a.o; umount -l $a.m; done
 set +e
