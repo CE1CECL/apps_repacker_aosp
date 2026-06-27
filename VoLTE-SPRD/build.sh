@@ -4,6 +4,9 @@ rm -rf ims ims.apk
 set -e
 if [ "$#" -lt 1 ]; then echo "Usage: $0 /path/to/root/"; exit 1; fi
 java -jar ../apktool.jar d -o ims "$1"/product/priv-app/ims/ims.apk
+java -jar ../baksmali.jar d -o ims/smali "$1"/system/framework/ims-common.jar
+java -jar ../baksmali.jar d -o ims/smali "$1"/system/framework/unisoc_ims_common.jar
+java -jar ../baksmali.jar d -o ims/smali "$1"/system/framework/radio_interactor_common.jar
 mkdir -p "ims/lib/armeabi-v7a/"
 xmlstarlet ed -L -N android=http://schemas.android.com/apk/res/android -d '/manifest/@android:compileSdkVersion' -d '/manifest/@android:compileSdkVersionCodename' -d '//application/@android:usesNonSdkApi' -u '/manifest/application/@android:extractNativeLibs' -v 'true' ims/AndroidManifest.xml
 set +e
